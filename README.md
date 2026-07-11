@@ -1,3 +1,14 @@
+---
+title: News to Trade API
+emoji: 📈
+colorFrom: indigo
+colorTo: blue
+sdk: gradio
+sdk_version: 4.36.0
+app_file: app.py
+pinned: false
+---
+
 # News-to-Trade AI Engine 🚀
 
 > **Real-time financial signal intelligence powered by AI news clustering.**  
