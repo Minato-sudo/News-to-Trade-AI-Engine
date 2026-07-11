@@ -7,6 +7,7 @@ sdk: gradio
 sdk_version: 4.36.0
 app_file: app.py
 pinned: false
+hardware: cpu-basic
 ---
 
 # News-to-Trade AI Engine 🚀
