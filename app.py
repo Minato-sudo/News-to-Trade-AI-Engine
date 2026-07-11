@@ -4,11 +4,6 @@
 
 from api.main import app
 import uvicorn
-import spaces
-
-@spaces.GPU
-def dummy_gpu_function():
-    pass
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=7860)
