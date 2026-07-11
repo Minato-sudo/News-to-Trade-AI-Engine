@@ -1,0 +1,4 @@
+N,Model,ROUGE-1,ROUGE-2,ROUGE-L,BERTScore-F1,Target_Met,ROUGE-2 (T5)
+1000,facebook/bart-large-cnn,34.69,31.45,31.43,86.81,True,28.74
+5000,facebook/bart-large-cnn,31.69,27.89,29.36,86.48,False,28.36
+10000,facebook/bart-large-cnn,34.0,30.59,31.64,86.61,True,28.75

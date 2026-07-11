@@ -1,0 +1,48 @@
+# ── Core NLP Pipeline (from original project) ─────────────────────────────────
+sentence-transformers==2.7.0
+scikit-learn==1.4.2
+transformers==4.41.0
+datasets==2.19.0
+torch>=2.0.0
+numpy==1.26.4
+pandas==2.2.2
+rouge-score==0.1.2
+nltk==3.8.1
+matplotlib==3.8.4
+seaborn==0.13.2
+bert-score==0.3.13
+tqdm
+
+# ── Web Framework & API ────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# ── Database ───────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.30
+aiosqlite==0.20.0
+
+# ── Free News Ingestion ────────────────────────────────────────────────────────
+feedparser==6.0.11          # RSS feed parser
+yfinance>=1.5.1             # Yahoo Finance (free market data + news)
+requests==2.32.3
+httpx==0.27.0
+
+# ── Intelligence Layers ────────────────────────────────────────────────────────
+qdrant-client==1.9.1        # Vector DB (free local/in-memory mode)
+xgboost==2.0.3              # Quant signal fusion
+lightgbm==4.3.0             # Alternative to XGBoost
+
+# ── Financial Data (all free) ─────────────────────────────────────────────────
+alpaca-py==0.26.0           # Alpaca paper trading (free account)
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+pydantic==2.7.1
+pydantic-settings==2.3.0
+schedule==1.2.2
+apscheduler==3.10.4
+loguru==0.7.2
+slowapi==0.1.9

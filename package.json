@@ -1,0 +1,13 @@
+{
+  "name": "storyline-to-signal",
+  "version": "1.0.0",
+  "description": "Root runner for From Storyline to Signal",
+  "scripts": {
+    "install:all": "npm --prefix frontend install",
+    "build": "npm --prefix frontend run build",
+    "dev": "npm --prefix frontend run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
