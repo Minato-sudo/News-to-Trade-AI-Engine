@@ -12,6 +12,7 @@ matplotlib
 seaborn
 bert-score
 tqdm
+huggingface_hub<0.23.0
 
 # ── Web Framework & API ────────────────────────────────────────────────────────
 fastapi
