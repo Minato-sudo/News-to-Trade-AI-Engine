@@ -128,7 +128,7 @@ export default function DashboardPage() {
     setAuthError("");
     setAuthLoading(true);
     try {
-      if (isRegistering) {
+      if (authView === "register") {
         await api.auth.register(authForm.username, authForm.email, authForm.password);
         await api.auth.login(authForm.username, authForm.password);
       } else {
