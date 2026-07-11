@@ -29,6 +29,7 @@ feedparser
 yfinance
 requests
 httpx
+websockets>=13.0
 
 # ── Intelligence Layers ────────────────────────────────────────────────────────
 qdrant-client
