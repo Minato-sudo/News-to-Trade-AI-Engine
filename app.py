@@ -3,26 +3,21 @@
 # Hugging Face looks for an 'app' object in app.py.
 
 import gradio as gr
-from api.main import app as fastapi_app
+from api.main import app
 import spaces
+import uvicorn
 
 @spaces.GPU
 def dummy_gpu_function():
-    return "GPU check passed! API is running."
+    return "GPU Registered!"
 
-# Create a tiny Gradio UI so Hugging Face registers the GPU function
-demo = gr.Interface(
-    fn=dummy_gpu_function,
-    inputs=None,
-    outputs="text",
-    title="TradeSense API Status",
-    description="The backend is successfully running. Use the Vercel frontend to interact with the API, or go to /docs for the Swagger UI."
-)
+# Create a minimal Gradio app just to satisfy Hugging Face's ZeroGPU supervisor
+demo = gr.Interface(fn=dummy_gpu_function, inputs=None, outputs="text")
 
-# Mount our FastAPI app into Gradio. The API will work normally!
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
+# The ZeroGPU supervisor requires demo.launch() to be called so it can run its internal monkey-patches.
+# We run Gradio on a hidden port (7861) and tell it not to block the thread.
+demo.launch(server_name="0.0.0.0", server_port=7861, prevent_thread_lock=True)
 
+# Now we bind our REAL FastAPI backend to the public port (7860) that Hugging Face exposes to Vercel!
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
-# Finish
