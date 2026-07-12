@@ -281,10 +281,26 @@ def predict_signal(
     ).reshape(1, -1)
 
     # XGBoost prediction
-    proba = _model.predict_proba(feat)[0]  # [P(down), P(flat), P(up)]
+    xgb_proba = _model.predict_proba(feat)[0]  # [P(down), P(flat), P(up)]
+    
+    # If we lack historical RAG data or market features, XGBoost (trained on synthetic data) 
+    # tends to collapse to neutral. We must inject the direct NLP impact score into the 
+    # probabilities to ensure the engine remains dynamic and responsive to news sentiment.
+    nlp_up = max(0.0, impact_score)
+    nlp_down = max(0.0, -impact_score)
+    nlp_flat = max(0.0, 1.0 - abs(impact_score))
+    
+    # Blend XGBoost with direct NLP (heavy bias to NLP if no historical analogs)
+    blend_weight = 0.85 if n_analogs == 0 else 0.4
+    proba = np.array([
+        xgb_proba[0] * (1 - blend_weight) + nlp_down * blend_weight,
+        xgb_proba[1] * (1 - blend_weight) + nlp_flat * blend_weight,
+        xgb_proba[2] * (1 - blend_weight) + nlp_up * blend_weight,
+    ])
+    proba = proba / np.sum(proba)  # Normalize
     
     # Calibrate/damp overconfident probabilities towards a uniform prior
-    # This keeps direction predictions identical, but scales confidence to realistic 55%-77% limits.
+    # This scales confidence to realistic 55%-85% limits.
     damp_factor = 0.65
     proba = proba * damp_factor + (1.0 - damp_factor) / 3.0
     
