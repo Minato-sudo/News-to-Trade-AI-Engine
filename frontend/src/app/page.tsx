@@ -94,6 +94,10 @@ export default function DashboardPage() {
   const [analysis,     setAnalysis]     = useState<any | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
 
+  // Price chart data — fetched from Vercel API route (has internet), NOT from HF backend
+  const [priceHistory,   setPriceHistory]   = useState<any[]>([]);
+  const [priceLoading,   setPriceLoading]   = useState(false);
+
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -107,6 +111,18 @@ export default function DashboardPage() {
     } catch { /* silent */ }
   };
 
+  // Fetch price history via Vercel server-side route (bypasses HF network restriction)
+  const loadPriceData = useCallback(async (t: string) => {
+    setPriceLoading(true);
+    setPriceHistory([]);
+    try {
+      const res = await fetch(`/api/price?ticker=${t}&days=35`);
+      const data = await res.json();
+      setPriceHistory(data.prices ?? []);
+    } catch { setPriceHistory([]); }
+    finally { setPriceLoading(false); }
+  }, []);
+
   // Load holistic ticker analysis whenever ticker changes (and user is authed)
   const loadAnalysis = useCallback(async (t: string) => {
     if (!authed) return;
@@ -119,8 +135,11 @@ export default function DashboardPage() {
   }, [authed]);
 
   useEffect(() => {
-    if (authed && ticker) loadAnalysis(ticker);
-  }, [authed, ticker, loadAnalysis]);
+    if (authed && ticker) {
+      loadAnalysis(ticker);
+      loadPriceData(ticker);
+    }
+  }, [authed, ticker, loadAnalysis, loadPriceData]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const handleAuth = async (e: React.FormEvent) => {
@@ -416,12 +435,34 @@ export default function DashboardPage() {
     ? signals.reduce((a, s) => a + s.confidence, 0) / signals.length
     : 0;
 
-  // Build chart data: merge historical + projected
-  const chartData = [
-    ...(analysis?.price_history ?? []).map((p: any) => ({ ...p, type: "history" })),
-    ...(analysis?.projected_prices ?? []).map((p: any) => ({ ...p, type: "projected" })),
-  ];
-  const joinDate = analysis?.price_history?.slice(-1)[0]?.date;
+  // Build chart data from Vercel-fetched price history (bypasses HF network block)
+  const historyPoints = priceHistory.map((p: any) => ({ ...p, type: "history" }));
+
+  // 3-day projection from last 5 prices + signal nudge
+  const projectedPoints: any[] = [];
+  if (historyPoints.length >= 5) {
+    const last5 = historyPoints.slice(-5).map((p: any) => p.price);
+    const lastPrice = last5[last5.length - 1];
+    const trend = (last5[last5.length - 1] - last5[0]) / 4;
+    const avgImpact = analysis?.avg_impact ?? 0;
+    const nudge = avgImpact * lastPrice * 0.005;
+    const daily = trend + nudge;
+    const lastDate = new Date(historyPoints[historyPoints.length - 1].date);
+    for (let i = 1; i <= 3; i++) {
+      const d = new Date(lastDate);
+      d.setDate(d.getDate() + i);
+      while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+      projectedPoints.push({
+        date: d.toISOString().slice(0, 10),
+        price: Math.round((lastPrice + daily * i) * 100) / 100,
+        type: "projected",
+        projected: true,
+      });
+    }
+  }
+
+  const chartData = [...historyPoints, ...projectedPoints];
+  const joinDate = historyPoints.slice(-1)[0]?.date;
 
   return (
     <div className="space-y-8 animate-slide-up max-w-7xl mx-auto">
@@ -612,7 +653,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-bold text-white">${ticker} — 30-Day Price + Projection</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Historical close prices + AI-projected next 3 trading days</p>
               </div>
-              {analysisLoading && (
+              {priceLoading && (
                 <span className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
               )}
             </div>
@@ -650,13 +691,12 @@ export default function DashboardPage() {
                     dot={false}
                     activeDot={{ r: 4, fill: "#818cf8" }}
                   />
-                  {/* Projected line */}
+                  {/* Projected line (dashed, colour by direction) */}
                   <Line
                     type="monotone"
                     data={[
-                      // bridge from last historical point
-                      ...(analysis?.price_history?.slice(-1) ?? []).map((p: any) => ({ ...p, type: "projected" })),
-                      ...(analysis?.projected_prices ?? []),
+                      ...historyPoints.slice(-1),
+                      ...projectedPoints,
                     ]}
                     dataKey="price"
                     stroke={
@@ -674,7 +714,7 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-gray-600 text-sm">
-                {analysisLoading ? "Loading price data..." : "Price data unavailable (no internet access to Yahoo Finance)"}
+                {priceLoading ? "Loading price chart..." : "No price data — check ticker symbol."}
               </div>
             )}
           </div>
