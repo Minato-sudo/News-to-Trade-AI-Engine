@@ -46,18 +46,21 @@ export default function AdminPage() {
   const [trainLoading, setTrainLoading] = useState(false);
   const [message,      setMessage]      = useState("");
 
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   const load = useCallback(async () => {
     setLoading(true);
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
     try {
       const [s, a] = await Promise.all([
-        fetch("/api/admin/status",   { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r => r.json()),
-        fetch("/api/admin/accuracy", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }).then(r => r.json()),
+        fetch(`${API}/api/admin/status`,   { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+        fetch(`${API}/api/admin/accuracy`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
       ]);
       setStatus(s);
       setAccuracy(a);
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, []);
+  }, [API]);
 
   useEffect(() => { load(); }, [load]);
 
