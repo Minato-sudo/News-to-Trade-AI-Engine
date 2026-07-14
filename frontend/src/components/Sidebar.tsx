@@ -10,6 +10,7 @@ const navItems = [
   { href: "/signals",   label: "Signals",    icon: "📡" },
   { href: "/clusters",  label: "Storylines", icon: "🗞️"  },
   { href: "/portfolio", label: "Portfolio",  icon: "💼" },
+  { href: "/admin",     label: "Model Lab",  icon: "🧠" },
 ];
 
 export function Sidebar() {

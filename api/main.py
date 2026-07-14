@@ -27,7 +27,7 @@ from loguru import logger
 
 from config import settings
 from db.database import init_db
-from api.routes import users, signals, clusters, portfolio
+from api.routes import users, signals, clusters, portfolio, admin
 
 
 # ── Background ingestion job ──────────────────────────────────────────────────
@@ -69,6 +69,53 @@ async def _run_ingestion_cycle():
         logger.warning(f"[SCHEDULER] Ingestion cycle failed: {e}")
 
 
+async def _run_labeling_cycle():
+    """Label unlabeled signals with real T+3 stock outcomes (runs every 6h)."""
+    try:
+        from training.label_outcomes import run_labeling
+        from db.database import async_session
+        async with async_session() as db:
+            result = await run_labeling(db, max_signals=100)
+        logger.info(f"[SCHEDULER] Labeling cycle done: {result}")
+    except Exception as e:
+        logger.warning(f"[SCHEDULER] Labeling cycle failed: {e}")
+
+
+async def _run_retraining_cycle():
+    """Auto-retrain XGBoost when enough labeled samples exist (runs every 24h)."""
+    try:
+        from training.retrain_pipeline import run_retraining_pipeline
+        from db.database import async_session
+        async with async_session() as db:
+            result = await run_retraining_pipeline(db)
+        logger.info(f"[SCHEDULER] Retraining cycle done: {result.get('status')}")
+    except Exception as e:
+        logger.warning(f"[SCHEDULER] Retraining cycle failed: {e}")
+
+
+async def _migrate_new_columns():
+    """Add new nullable Signal columns on existing SQLite DBs without Alembic."""
+    try:
+        from db.database import engine
+        async with engine.begin() as conn:
+            for col, col_type in [
+                ("actual_direction",   "TEXT"),
+                ("actual_return",      "REAL"),
+                ("outcome_labeled_at", "DATETIME"),
+            ]:
+                try:
+                    await conn.execute(
+                        __import__("sqlalchemy").text(
+                            f"ALTER TABLE signals ADD COLUMN {col} {col_type}"
+                        )
+                    )
+                    logger.info(f"[MIGRATE] Added column: signals.{col}")
+                except Exception:
+                    pass  # column already exists
+    except Exception as e:
+        logger.debug(f"[MIGRATE] Migration skipped: {e}")
+
+
 # ── Lifespan (startup / shutdown) ────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -78,6 +125,10 @@ async def lifespan(app: FastAPI):
     # Init DB tables
     await init_db()
     logger.info("✅ Database initialized")
+
+    # Migrate any new columns (idempotent — safe to run every startup)
+    await _migrate_new_columns()
+    logger.info("✅ DB schema up to date")
 
     # Warm up Qdrant
     try:
@@ -96,9 +147,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️  XGBoost init failed: {e}")
 
-    # ── Start background news ingestion scheduler ─────────────────────────────
+    # ── Start background scheduler ─────────────────────────────────────────────
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     scheduler = AsyncIOScheduler()
+
+    # News ingestion — every N seconds (configured in settings)
     scheduler.add_job(
         _run_ingestion_cycle,
         trigger="interval",
@@ -107,10 +160,31 @@ async def lifespan(app: FastAPI):
         replace_existing=True,
         max_instances=1,
     )
-    scheduler.start()
-    logger.info(f"✅ Scheduler started — ingesting every {settings.FEED_POLL_INTERVAL_SECONDS}s")
 
-    # Run one ingestion cycle immediately on startup
+    # Outcome labeling — every 6 hours
+    scheduler.add_job(
+        _run_labeling_cycle,
+        trigger="interval",
+        hours=6,
+        id="outcome_labeling",
+        replace_existing=True,
+        max_instances=1,
+    )
+
+    # Model retraining — every 24 hours
+    scheduler.add_job(
+        _run_retraining_cycle,
+        trigger="interval",
+        hours=24,
+        id="model_retraining",
+        replace_existing=True,
+        max_instances=1,
+    )
+
+    scheduler.start()
+    logger.info(f"✅ Scheduler started — ingestion every {settings.FEED_POLL_INTERVAL_SECONDS}s, labeling every 6h, retraining every 24h")
+
+    # Run first ingestion immediately
     asyncio.create_task(_run_ingestion_cycle())
 
     logger.info("✅ API ready — all systems go!")
@@ -153,6 +227,7 @@ app.include_router(users.router)
 app.include_router(signals.router)
 app.include_router(clusters.router)
 app.include_router(portfolio.router)
+app.include_router(admin.router)
 
 
 # ── Root endpoints ────────────────────────────────────────────────────────────

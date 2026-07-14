@@ -80,7 +80,7 @@ class Signal(Base):
     user_id         = Column(Integer, ForeignKey("users.id"), nullable=False)
     cluster_id      = Column(Integer, ForeignKey("clusters.id"), nullable=True)
     ticker          = Column(String(20), index=True, nullable=False)
-    direction       = Column(String(10))         # 'up' | 'down' | 'flat'
+    direction       = Column(String(10))         # 'up' | 'down' | 'flat' (predicted)
     confidence      = Column(Float)              # 0.0 – 1.0
     impact_score    = Column(Float)              # FinBERT magnitude estimate
     rag_analog      = Column(JSON, nullable=True) # closest historical event
@@ -89,6 +89,11 @@ class Signal(Base):
     raw_text        = Column(Text, nullable=True)
     generated_at    = Column(DateTime, default=datetime.utcnow, index=True)
     acted_on        = Column(Boolean, default=False)
+
+    # ── Phase 1: Real outcome labels (populated by training/label_outcomes.py) ──
+    actual_direction   = Column(String(10), nullable=True)  # 'up' | 'down' | 'flat' (real)
+    actual_return      = Column(Float,      nullable=True)  # T+3 forward return %
+    outcome_labeled_at = Column(DateTime,   nullable=True)  # when the label was written
 
     user            = relationship("User",    back_populates="signals")
     cluster         = relationship("Cluster", back_populates="signals")
