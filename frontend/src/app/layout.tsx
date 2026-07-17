@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
+      <body className={`${inter.className} min-h-screen`}>
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 ml-64 p-6">

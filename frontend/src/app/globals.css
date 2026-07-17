@@ -1,89 +1,111 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.15);
+  /* Sleek, sophisticated slate color palette */
+  --bg-app: #0a0c10;          /* Deep rich slate */
+  --bg-card: #12151c;         /* Slightly lighter slate for cards */
+  --bg-card-hover: #181c25;
+  --border-subtle: #222631;
+  --border-focus: #3b82f6;    /* Professional true blue */
+  
+  --accent: #3b82f6;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  
+  /* Financial indicators */
   --up: #10b981;
   --down: #ef4444;
-  --flat: #6b7280;
+  --flat: #64748b;
 }
 
 body {
-  background-color: #030712;
-  color: #f3f4f6;
+  background-color: var(--bg-app);
+  color: var(--text-main);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.01) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px);
+  background-size: 64px 64px;
 }
 
-/* Glassmorphism Cards */
+/* Premium Solid Cards (replacing glassmorphism) */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
 }
 
 .glass-card {
-  background: rgba(31, 41, 55, 0.45);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 0 25px rgba(99, 102, 241, 0.1);
+  background-color: var(--bg-card-hover);
+  border-color: #334155;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
   transform: translateY(-2px);
 }
 
-/* Gradients */
+/* Subtle Gradients for Headers */
 .gradient-bg {
-  background: radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+  background: radial-gradient(circle at top, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #4338ca 100%);
+  /* Crisp, creative monochrome metallic gradient instead of neon purple */
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 /* Inputs & Forms */
 .input-premium {
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #0d0f14;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  border-radius: 8px;
   transition: all 0.2s ease-in-out;
 }
 
 .input-premium:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 1px var(--border-focus);
   outline: none;
 }
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
-  transition: all 0.2s ease-in-out;
+  background-color: var(--accent);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+  border-radius: 8px;
+  transition: all 0.15s ease-in-out;
 }
 
 .btn-primary:hover {
+  background-color: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(99, 102, 241, 0.6);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* Animations */
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
